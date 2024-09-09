@@ -136,3 +136,51 @@ def send_land_message(vehicle, x, y):
     )
     vehicle.send_mavlink(msg)
     vehicle.flush()
+    
+    
+####### Testing in Gazebo #########
+
+# Function to convert local ENU coordinates to GPS coordinates
+def convert_local_to_gps(vehicle, x, y):
+    # Get current position as the reference point
+    lat_ref = vehicle.location.global_relative_frame.lat
+    lon_ref = vehicle.location.global_relative_frame.lon
+
+    # Calculate new GPS coordinates
+    # Latitude offset (d_lat) is zero since y = 0
+    d_lat = 0
+
+    # Longitude offset calculation for x meters east
+    d_lon = x / (111139 * math.cos(math.radians(lat_ref)))
+
+    # New GPS coordinates
+    new_latitude = lat_ref + d_lat
+    new_longitude = lon_ref + d_lon
+
+    return new_latitude, new_longitude
+
+# Function to travel to a specific local coordinate in Gazebo
+def travel_to_local_coordinate(vehicle, x, y, altitude):
+    # Convert local coordinates (x, y) to GPS coordinates
+    target_latitude, target_longitude = convert_local_to_gps(vehicle, x, y)
+
+    # Define the target location
+    target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
+    
+    # Command the drone to fly to the target location
+    vehicle.simple_goto(target_location)
+
+    # Monitor the distance to the target
+    while True:
+        current_location = vehicle.location.global_relative_frame
+        distance = calculate_distance(current_location.lat, current_location.lon, target_latitude, target_longitude)
+        print('Distance to target location: {:.2f} meters'.format(distance))
+        
+        # Check if the target location is reached
+        if (abs(current_location.lat - target_latitude) < 0.00001 and
+            abs(current_location.lon - target_longitude) < 0.00001 and
+            abs(current_location.alt - altitude) < 0.5):
+            print('Target GPS coordinate reached!')
+            break
+        
+        time.sleep(2)
