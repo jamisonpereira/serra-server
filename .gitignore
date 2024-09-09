@@ -170,3 +170,7 @@ server.cer
 private.key
 public.key
 
+# mavproxy
+eeprom.bin
+mav.tlog
+mav.tlog.raw
