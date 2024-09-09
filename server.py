@@ -6,7 +6,7 @@ from services.websocket.websocket import setup_websocket  # Import WebSocket set
 import os
 from dotenv import load_dotenv
 
-port = os.getenv('PORT') or 443
+port = os.getenv('PORT') or 8443
 
 # Load SSL certificate and private key for HTTPS
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
