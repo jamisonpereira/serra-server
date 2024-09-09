@@ -36,8 +36,8 @@ def request_resupply():
 
 ######### For testing in Gazebo #########
   # Set the target local coordinate in Gazebo for testing (7.5 meters east, 0 meters north)
-  x = 7.5  # East in meters
-  y = 0    # North in meters
+  x = 0  # East in meters
+  y = 7.5    # North in meters
   altitude = drone.location.global_relative_frame.alt  # Current altitude
 
   # Travel to local coordinate

@@ -146,12 +146,11 @@ def convert_local_to_gps(vehicle, x, y):
     lat_ref = vehicle.location.global_relative_frame.lat
     lon_ref = vehicle.location.global_relative_frame.lon
 
-    # Calculate new GPS coordinates
-    # Latitude offset (d_lat) is zero since y = 0
-    d_lat = 0
+    # Calculate latitude offset (north-south direction)
+    d_lat = y / 111139  # Convert meters to degrees (approximately 111,139 meters per degree of latitude)
 
-    # Longitude offset calculation for x meters east
-    d_lon = x / (111139 * math.cos(math.radians(lat_ref)))
+    # Calculate longitude offset (east-west direction)
+    d_lon = x / (111139 * math.cos(math.radians(lat_ref)))  # Convert meters to degrees (adjusted by latitude)
 
     # New GPS coordinates
     new_latitude = lat_ref + d_lat
