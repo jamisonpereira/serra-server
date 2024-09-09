@@ -26,15 +26,6 @@ def request_resupply():
   arm_and_takeoff(vehicle=drone, target_height=target_height)
 
   # Get GPS coordinate from request
-<<<<<<< HEAD
-#  gps_coordinate = request.json.get('gps_coordinate')
-#  latitude = gps_coordinate.get('latitude')
-#  longitude = gps_coordinate.get('longitude')
-#  altitude = gps_coordinate.get('altitude')
-
-  # Travel to GPS coordinate
-#  travel_to_gps_coordinate(vehicle=drone, latitude=latitude, longitude=longitude, altitude=altitude)
-=======
   # gps_coordinate = request.json.get('gps_coordinate')
   # latitude = gps_coordinate.get('latitude')
   # longitude = gps_coordinate.get('longitude')
@@ -52,6 +43,5 @@ def request_resupply():
   # Travel to local coordinate
   travel_to_local_coordinate(vehicle=drone, x=x, y=y, altitude=altitude)
 #########################################
->>>>>>> 04ebd2fe8bfb07d334bfcf6a77f7a287fa60988c
 
   return jsonify({'message': 'Drone resupply processed.'})
