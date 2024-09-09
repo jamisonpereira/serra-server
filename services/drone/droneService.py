@@ -1,4 +1,4 @@
-# services/droneService.py
+# services/drone/droneService.py
 
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
@@ -86,15 +86,17 @@ def travel_to_gps_coordinate(vehicle, latitude, longitude, altitude):
       break
     time.sleep(2)
 
-def calculate_distance(lat1, lon1, lat2, lon2):
+def calculate_distance(lat1, lon1, alt1, lat2, lon2, alt2):
   """
   Calculates the distance between two GPS coordinates using the haversine formula.
 
   Args:
     lat1 (float): Latitude of the first coordinate.
     lon1 (float): Longitude of the first coordinate.
+    alt1 (float): Altitude of the first coordinate.
     lat2 (float): Latitude of the second coordinate.
     lon2 (float): Longitude of the second coordinate.
+    alt2 (float): Altitude of the second coordinate.
 
   Returns:
     float: The distance between the two coordinates in meters.
@@ -105,12 +107,14 @@ def calculate_distance(lat1, lon1, lat2, lon2):
   phi2 = math.radians(lat2)
   delta_phi = math.radians(lat2 - lat1)
   delta_lambda = math.radians(lon2 - lon1)
+  delta_alt = alt2 - alt1
 
   a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
   c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-  distance = R * c
-  return distance
+  distance_2d = R * c
+  distance_3d = math.sqrt(distance_2d ** 2 + delta_alt ** 2)
+  return distance_3d
 
 # Send a movement command to the drone
 def send_movement_message(vehicle, vx, vy, vz):
@@ -136,8 +140,14 @@ def send_land_message(vehicle, x, y):
     )
     vehicle.send_mavlink(msg)
     vehicle.flush()
-    
-    
+
+# Function to get the drone's current position
+def get_current_position(vehicle):
+    # This function should return the current x, y, and altitude of the drone
+    # Example:
+    return vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, vehicle.location.global_relative_frame.alt
+
+
 ####### Testing in Gazebo #########
 
 # Function to convert local ENU coordinates to GPS coordinates
@@ -159,27 +169,30 @@ def convert_local_to_gps(vehicle, x, y):
     return new_latitude, new_longitude
 
 # Function to travel to a specific local coordinate in Gazebo
-def travel_to_local_coordinate(vehicle, x, y, altitude):
+def travel_to_local_coordinate(vehicle, target_location):
     # Convert local coordinates (x, y) to GPS coordinates
-    target_latitude, target_longitude = convert_local_to_gps(vehicle, x, y)
+    # target_latitude, target_longitude = convert_local_to_gps(vehicle, x, y)
 
     # Define the target location
-    target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
+    # target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
     
     # Command the drone to fly to the target location
     vehicle.simple_goto(target_location)
+    
+    return True
 
     # Monitor the distance to the target
-    while True:
-        current_location = vehicle.location.global_relative_frame
-        distance = calculate_distance(current_location.lat, current_location.lon, target_latitude, target_longitude)
-        print('Distance to target location: {:.2f} meters'.format(distance))
+    # while True:
+    #     current_location = vehicle.location.global_relative_frame
+    #     distance = calculate_distance(current_location.lat, current_location.lon, target_latitude, target_longitude)
+    #     print('Distance to target location: {:.2f} meters'.format(distance))
         
-        # Check if the target location is reached
-        if (abs(current_location.lat - target_latitude) < 0.00001 and
-            abs(current_location.lon - target_longitude) < 0.00001 and
-            abs(current_location.alt - altitude) < 0.5):
-            print('Target GPS coordinate reached!')
-            break
+    #     # Check if the target location is reached
+    #     if (abs(current_location.lat - target_latitude) < 0.00001 and
+    #         abs(current_location.lon - target_longitude) < 0.00001 and
+    #         abs(current_location.alt - altitude) < 0.5):
+    #         print('Target GPS coordinate reached!')
+    #         break
         
-        time.sleep(2)
+    #     time.sleep(2)
+        
