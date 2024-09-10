@@ -1,9 +1,12 @@
 # controllers/resupplyController.py
 
 from flask import request, jsonify
+from dronekit import LocationGlobalRelative
 from services.drone.droneService import connect_drone, set_vehicle_parameters, arm_and_takeoff, travel_to_gps_coordinate, travel_to_local_coordinate, convert_local_to_gps, get_current_position, calculate_distance
-from services.drone.precisionLandingService import precision_landing
+# from services.drone.precisionLandingService import precision_landing
 import time
+import subprocess
+import os
 
 def request_resupply():
   # Connect to the drone
@@ -42,16 +45,19 @@ def request_resupply():
   y = 7.5    # North in meters
   altitude = drone.location.global_relative_frame.alt  # Current altitude
   target_latitude, target_longitude = convert_local_to_gps(drone, x, y)
-  target_location = (target_latitude, target_longitude, altitude)
+  # target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
   
-  how_close_to_target = 0.25  # How close the drone needs to be to the target in meters  
+  how_close_to_target = 1  # How close the drone needs to be to the target in meters  
   
   # Travel to local coordinate
-  if travel_to_local_coordinate(vehicle=drone, target_location=target_location):
+  print('Traveling to coordinates')
+  if travel_to_local_coordinate(vehicle=drone, target_latitude=target_latitude, target_longitude=target_longitude, altitude=altitude):
       # Continuously check if the drone has reached the destination
       while True:
           current_x, current_y, current_altitude = get_current_position(vehicle=drone)
-          if calculate_distance(current_x, current_y, current_altitude, x, y, altitude) < how_close_to_target:
+          current_distance = calculate_distance(current_x, current_y, current_altitude, target_latitude, target_longitude, altitude)
+          print(f'Current distance to target: {current_distance}')
+          if current_distance < how_close_to_target:
               print(f"Drone has reached the destination at coordinates ({x}, {y}) with altitude {altitude}.")
               break
           time.sleep(1)  # Wait for 1 second before checking again    
@@ -59,11 +65,14 @@ def request_resupply():
   # Prompt the user to start precision landing
   start_precision_landing = input("Do you want to start precision landing? (y/n): ")
 
-  if start_precision_landing.lower() == "y" or "yes":
-    # Start precision landing
-    precision_landing(drone=drone)
-  # precision_landing(drone=drone)
-    
+  if start_precision_landing.lower() == "y" or start_precision_landing.lower() == "yes":
+      print('Executing precision landing.')
+
+      # Run the wrapper scriptb
+      # subprocess.Popen(['/usr/local/bin/run_precision_landing_wrapper.sh'])
+      subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', '/usr/local/bin/run_precision_landing_wrapper.sh; exec bash'])
+
+
 #########################################
 
   return jsonify({'message': 'Drone resupply processed.'})

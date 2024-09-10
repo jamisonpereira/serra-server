@@ -169,12 +169,12 @@ def convert_local_to_gps(vehicle, x, y):
     return new_latitude, new_longitude
 
 # Function to travel to a specific local coordinate in Gazebo
-def travel_to_local_coordinate(vehicle, target_location):
+def travel_to_local_coordinate(vehicle, target_latitude, target_longitude, altitude):
     # Convert local coordinates (x, y) to GPS coordinates
     # target_latitude, target_longitude = convert_local_to_gps(vehicle, x, y)
 
     # Define the target location
-    # target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
+    target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
     
     # Command the drone to fly to the target location
     vehicle.simple_goto(target_location)
