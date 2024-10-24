@@ -63,7 +63,7 @@ def arm_and_takeoff(vehicle, target_height):
 
         while True:
             print('Current Altitude: {:.2f}'.format(vehicle.location.global_relative_frame.alt))
-            if vehicle.location.global_relative_frame.alt >= 0.95 * target_height:
+            if vehicle.location.global_relative_frame.alt >= 0.85 * target_height:
                 print('Target altitude reached!')
                 break
             time.sleep(1)
@@ -196,3 +196,96 @@ def travel_to_local_coordinate(vehicle, target_latitude, target_longitude, altit
         
     #     time.sleep(2)
         
+
+########### GIMBAL CONTROLS ############
+
+# Map common commands to RC channel and PWM values
+gimbal_command_map = {
+    'tilt': {
+        'up': 1100,
+        'down': 1900,
+        'neutral': 1500
+    },
+    'roll': {
+        'up': 1100,
+        'down': 1900,
+        'neutral': 1500
+    }
+}
+
+# Gimbal channel mapping
+gimbal_channel_map = {
+    'tilt': 10,  # Channel 10 is for tilt
+    'roll': 9    # Channel 9 is for roll
+}
+
+
+def control_gimbal(vehicle, command_type, command_direction):
+    """
+    Controls the gimbal by sending a MAV_CMD_DO_SET_SERVO command to adjust tilt or roll.
+
+    Args:
+        vehicle (Vehicle): The connected vehicle object.
+        command_type (str): The type of command ('tilt' or 'roll').
+        command_direction (str): The direction ('up', 'down', or 'neutral').
+
+    Returns:
+        None
+    """
+    try:
+        # Get the correct channel and PWM value based on the command type and direction
+        channel = gimbal_channel_map[command_type] + 1  # Channels are 0-indexed
+        pwm_value = gimbal_command_map[command_type][command_direction]
+
+        # Send MAV_CMD_DO_SET_SERVO command
+        print(f"Setting {command_type} to {command_direction} (PWM: {pwm_value}) on channel {channel}")
+        vehicle._master.mav.command_long_send(
+            vehicle._master.target_system,    # target_system
+            vehicle._master.target_component, # target_component
+            mavutil.mavlink.MAV_CMD_DO_SET_SERVO,  # Command ID for setting servos
+            0,                                # Confirmation
+            channel,                          # Servo channel
+            pwm_value,                        # PWM value (1000-2000)
+            0, 0, 0, 0, 0                    # Unused parameters
+        )
+        print(f"Gimbal {command_type} set to {command_direction} (PWM: {pwm_value}) on channel {channel}")
+    except KeyError:
+        print(f"Invalid command type '{command_type}' or direction '{command_direction}'")
+    except Exception as e:
+        print(f"Error controlling gimbal: {e}")
+        
+def control_gimbal_pitch_yaw(vehicle, pitch=90, yaw=0, follow_body_frame=True):
+    """
+    Controls the gimbal's pitch and yaw using MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW to point the gimbal straight down.
+
+    Args:
+        vehicle (Vehicle): The connected vehicle object.
+        pitch (float): Pitch angle in degrees (-90 for straight down).
+        yaw (float): Yaw angle in degrees (0 is forward).
+        follow_body_frame (bool): If True, gimbal yaw follows the vehicle body frame; if False, yaw locks to the earth frame.
+
+    Returns:
+        None
+    """
+    print(f"Setting gimbal pitch={pitch}, yaw={yaw}, follow_body_frame={follow_body_frame}")
+    try:
+        # Define the flags for yaw control (0 = follow body frame, 16 = lock to earth frame)
+        yaw_control_flag = 0 if follow_body_frame else 16
+
+        # Send MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW command
+        vehicle._master.mav.command_long_send(
+            vehicle._master.target_system,    # Target system ID
+            vehicle._master.target_component, # Target component ID
+            mavutil.mavlink.MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW,  # Command ID
+            0,                                # Confirmation
+            pitch,                            # Pitch angle in degrees (-90 for straight down)
+            yaw,                              # Yaw angle in degrees (0 = forward)
+            float('nan'),                     # Pitch rate (not used)
+            float('nan'),                     # Yaw rate (not used)
+            yaw_control_flag,                 # 0=Follow body frame, 16=Lock to earth frame
+            0,                                # Not used
+            0                                 # Gimbal device ID (0 = primary gimbal)
+        )
+        print(f"Setting gimbal (Pitch={pitch}, Yaw={yaw})")
+    except Exception as e:
+        print(f"Error setting gimbal pitch and yaw: {e}")

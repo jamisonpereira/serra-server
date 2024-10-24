@@ -2,7 +2,7 @@
 
 from flask import request, jsonify
 from dronekit import LocationGlobalRelative
-from services.drone.droneService import connect_drone, set_vehicle_parameters, arm_and_takeoff, travel_to_gps_coordinate, travel_to_local_coordinate, convert_local_to_gps, get_current_position, calculate_distance
+from services.drone.droneService import connect_drone, set_vehicle_parameters, arm_and_takeoff, travel_to_gps_coordinate, travel_to_local_coordinate, convert_local_to_gps, get_current_position, calculate_distance, control_gimbal, control_gimbal_pitch_yaw
 # from services.drone.precisionLandingService import precision_landing
 import time
 import subprocess
@@ -24,8 +24,9 @@ def request_resupply():
 
   # Set vehicle parameters
   set_vehicle_parameters(vehicle=drone, params=parameters)
+  control_gimbal_pitch_yaw(drone, pitch=90, yaw=0, follow_body_frame=False)
 
-  target_height = 4 #TODO: make this height configurable in app
+  target_height = 3.2 #TODO: make this height configurable in app
 
   # Arm and takeoff
   arm_and_takeoff(vehicle=drone, target_height=target_height)
@@ -42,7 +43,7 @@ def request_resupply():
 ######### For testing in Gazebo #########
   # Set the target local coordinate in Gazebo for testing (7.5 meters east, 0 meters north)
   x = 0  # East in meters
-  y = 7.5    # North in meters
+  y = 10    # North in meters
   altitude = drone.location.global_relative_frame.alt  # Current altitude
   target_latitude, target_longitude = convert_local_to_gps(drone, x, y)
   # target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)
@@ -70,7 +71,9 @@ def request_resupply():
 
       # Run the wrapper scriptb
       # subprocess.Popen(['/usr/local/bin/run_precision_landing_wrapper.sh'])
-      subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', '/usr/local/bin/run_precision_landing_wrapper.sh; exec bash'])
+      # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', '/usr/local/bin/run_precision_landing_wrapper.sh; exec bash'])
+      precision_landing_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/serverPrecisionLanding.py"
+      subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {precision_landing_script}; exec bash'])
 
 
 #########################################
