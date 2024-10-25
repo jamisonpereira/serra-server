@@ -254,7 +254,7 @@ def control_gimbal(vehicle, command_type, command_direction):
     except Exception as e:
         print(f"Error controlling gimbal: {e}")
         
-def control_gimbal_pitch_yaw(vehicle, pitch=90, yaw=0, follow_body_frame=True):
+def control_gimbal_pitch_yaw(vehicle, pitch=90, yaw=0, follow_body_frame=False):
     """
     Controls the gimbal's pitch and yaw using MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW to point the gimbal straight down.
 
