@@ -3,20 +3,33 @@
 from .handlers.connection_handlers import handle_connect, handle_disconnect
 from .handlers.message_handlers import handle_message
 from .handlers.video_handlers import handle_video_feed
+from .handlers.drone_handlers import broadcast_drone_coordinates
 
 connected_clients = set()
+stop_broadcast = None
 
 def setup_websocket(socketio):
     """
     Set up WebSocket routes and event handlers.
     """
+    
+    global stop_broadcast
+
     socketio.on_event('connect', handle_connect)
     socketio.on_event('disconnect', handle_disconnect)
     socketio.on_event('message', handle_message)
     socketio.on_event('video_feed', handle_video_feed)
 
+    # Start broadcasting drone coordinates
+    stop_broadcast = broadcast_drone_coordinates(socketio)
 
-
+def shutdown_server():
+    """
+    Clean up the background threads and other resources before server shutdown.
+    """
+    global stop_broadcast
+    if stop_broadcast:
+        stop_broadcast.set()
 
 
 # # webscoket/websocket.py

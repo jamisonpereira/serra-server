@@ -3,7 +3,7 @@
 import ssl
 import os
 from app import app  # Import the Flask app
-from services.websocket.websocket import setup_websocket  # Import WebSocket setup function
+from services.websocket.websocket import setup_websocket, shutdown_server  # Import WebSocket setup function
 from dotenv import load_dotenv
 from flask_socketio import SocketIO
 
@@ -21,6 +21,11 @@ context.load_cert_chain(certfile='server.cert', keyfile='server.key')
 
 # Attach WebSocket logic (handled in websocket.py)
 setup_websocket(socketio)
+
+# Register a handler to clean up resources on server shutdown
+@app.teardown_appcontext
+def shutdown(exception=None):
+    shutdown_server()
 
 if __name__ == "__main__":
     # Start the Flask-SocketIO server with HTTPS
