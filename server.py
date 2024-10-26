@@ -2,6 +2,8 @@
 
 import ssl
 import os
+import atexit
+import signal
 from app import app  # Import the Flask app
 from services.websocket.websocket import setup_websocket, shutdown_server  # Import WebSocket setup function
 from dotenv import load_dotenv
@@ -12,8 +14,8 @@ load_dotenv()
 
 port = int(os.getenv('PORT', 8443))
 
-# Create SocketIO instance
-socketio = SocketIO(app)
+# Create SocketIO instance with threading mode
+socketio = SocketIO(app, async_mode='threading')
 
 # Load SSL certificate and private key for HTTPS
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -22,10 +24,17 @@ context.load_cert_chain(certfile='server.cert', keyfile='server.key')
 # Attach WebSocket logic (handled in websocket.py)
 setup_websocket(socketio)
 
-# Register a handler to clean up resources on server shutdown
-@app.teardown_appcontext
-def shutdown(exception=None):
-    shutdown_server()
+# Register a handler to clean up resources when the server shuts down
+atexit.register(shutdown_server)
+
+# Handle SIGTERM and SIGINT for graceful shutdown
+def handle_shutdown_signal(signum, frame):
+    print("Shutdown signal received!")
+    shutdown_server()  # Explicit call to clean up resources
+
+# Register signal handlers for SIGINT and SIGTERM
+signal.signal(signal.SIGTERM, handle_shutdown_signal)
+signal.signal(signal.SIGINT, handle_shutdown_signal)
 
 if __name__ == "__main__":
     # Start the Flask-SocketIO server with HTTPS

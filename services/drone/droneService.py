@@ -5,37 +5,47 @@ from pymavlink import mavutil
 import time
 import math
 
+vehicle = None
+
 # Connect to the vehicle
 def connect_drone(connection_string='127.0.0.1:14550'):
-  try:
-    print("Connecting to vehicle...")
-    vehicle = connect(connection_string, wait_ready=True)
-    print("Connected to vehicle.")
+    """
+    Connect to the drone and return the vehicle object.
+    This function uses a singleton pattern to ensure only one connection is made.
+    """
+    global vehicle
+    if vehicle is None:
+        try:
+            print("Connecting to vehicle...")
+            vehicle = connect(connection_string, wait_ready=True)
+            print("Connected to vehicle.")
+        except Exception as e:
+            print("Failed to connect to vehicle:", str(e))
+            return None
+    else:
+        print("Reusing existing vehicle connection.")
     return vehicle
-  except Exception as e:
-    print("Failed to connect to vehicle:", str(e))
-    return None
 
 # Set vehicle parameters
 def set_vehicle_parameters(vehicle, params):
-  """
-  Sets the parameters of the vehicle.
+    """
+    Sets the parameters of the vehicle.
 
-  Args:
-    vehicle (Vehicle): The vehicle object.
-    params (dict): A dictionary containing the parameter names and their corresponding values.
+    Args:
+        vehicle (Vehicle): The vehicle object.
+        params (dict): A dictionary containing the parameter names and their corresponding values.
 
-  Returns:
-    None
-  """
-  try:
-    print("Setting vehicle parameters...")
-    for param_name, param_value in params.items():
-      print(f"Setting parameter {param_name} to {param_value}")
-      vehicle.parameters[param_name] = param_value
-    print("Vehicle parameters set successfully.")
-  except Exception as e:
-    print("Failed to set vehicle parameters:", str(e))
+    Returns:
+        None
+    """
+    try:
+        print("Setting vehicle parameters...")
+        for param_name, param_value in params.items():
+            print(f"Setting parameter {param_name} to {param_value}")
+            vehicle.parameters[param_name] = param_value
+        print("Vehicle parameters set successfully.")
+    except Exception as e:
+        print("Failed to set vehicle parameters:", str(e))
 
 # Arm the vehicle and take off to a specified height
 def arm_and_takeoff(vehicle, target_height):
@@ -143,8 +153,18 @@ def send_land_message(vehicle, x, y):
 
 # Function to get the drone's current position
 def get_current_position(vehicle):
-    # This function should return the current x, y, and altitude of the drone
-    # Example:
+    """
+    Retrieve the current position of the drone.
+
+    Args:
+        vehicle: An object representing the drone, which contains location information.
+
+    Returns:
+        tuple: A tuple containing the latitude (x), longitude (y), and altitude of the drone.
+
+    Example:
+        lat, lon, alt = get_current_position(vehicle)
+    """
     return vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, vehicle.location.global_relative_frame.alt
 
 
@@ -152,6 +172,25 @@ def get_current_position(vehicle):
 
 # Function to convert local ENU coordinates to GPS coordinates
 def convert_local_to_gps(vehicle, x, y):
+    """
+    Convert local coordinates (x, y) to GPS coordinates (latitude, longitude).
+
+    This function takes a vehicle's current GPS position as a reference point and converts
+    local x, y coordinates (in meters) to new GPS coordinates.
+
+    Args:
+        vehicle: An object representing the vehicle, which contains the current GPS position.
+        x (float): The local x-coordinate (east-west direction) in meters.
+        y (float): The local y-coordinate (north-south direction) in meters.
+
+    Returns:
+        tuple: A tuple containing the new latitude and longitude as floats.
+
+    Notes:
+        - The conversion assumes a flat Earth approximation, which is generally accurate for small distances.
+        - The latitude offset is calculated by dividing the y-coordinate by the approximate number of meters per degree of latitude (111,139 meters).
+        - The longitude offset is calculated by dividing the x-coordinate by the number of meters per degree of longitude, adjusted by the cosine of the reference latitude.
+    """
     # Get current position as the reference point
     lat_ref = vehicle.location.global_relative_frame.lat
     lon_ref = vehicle.location.global_relative_frame.lon
@@ -170,8 +209,21 @@ def convert_local_to_gps(vehicle, x, y):
 
 # Function to travel to a specific local coordinate in Gazebo
 def travel_to_local_coordinate(vehicle, target_latitude, target_longitude, altitude):
-    # Convert local coordinates (x, y) to GPS coordinates
-    # target_latitude, target_longitude = convert_local_to_gps(vehicle, x, y)
+    """
+    Commands the drone to travel to a specific local coordinate.
+
+    Args:
+        vehicle (Vehicle): The connected vehicle object.
+        target_latitude (float): The target latitude in degrees.
+        target_longitude (float): The target longitude in degrees.
+        altitude (float): The target altitude in meters.
+
+    Returns:
+        bool: True if the command is successfully sent.
+
+    Example:
+        travel_to_local_coordinate(vehicle, 37.7749, -122.4194, 10)
+    """
 
     # Define the target location
     target_location = LocationGlobalRelative(target_latitude, target_longitude, altitude)

@@ -24,9 +24,9 @@ def request_resupply():
 
   # Set vehicle parameters
   set_vehicle_parameters(vehicle=drone, params=parameters)
-  control_gimbal_pitch_yaw(drone, pitch=90, yaw=0, follow_body_frame=False)
+  control_gimbal_pitch_yaw(drone, pitch=90, yaw=0, follow_body_frame=True)
 
-  target_height = 3.2 #TODO: make this height configurable in app
+  target_height = 2.3 #TODO: make this height configurable in app
 
   # Arm and takeoff
   arm_and_takeoff(vehicle=drone, target_height=target_height)

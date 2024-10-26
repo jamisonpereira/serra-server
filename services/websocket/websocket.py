@@ -4,8 +4,8 @@ from .handlers.connection_handlers import handle_connect, handle_disconnect
 from .handlers.message_handlers import handle_message
 from .handlers.video_handlers import handle_video_feed
 from .handlers.drone_handlers import broadcast_drone_coordinates
+from .state import connected_clients  # Import the connected_clients from state module
 
-connected_clients = set()
 stop_broadcast = None
 
 def setup_websocket(socketio):
@@ -15,20 +15,52 @@ def setup_websocket(socketio):
     
     global stop_broadcast
 
-    socketio.on_event('connect', handle_connect)
-    socketio.on_event('disconnect', handle_disconnect)
+    socketio.on_event('connect', lambda: handle_connect_wrapper(socketio))
+    socketio.on_event('disconnect', lambda: handle_disconnect_wrapper(socketio))
     socketio.on_event('message', handle_message)
     socketio.on_event('video_feed', handle_video_feed)
 
-    # Start broadcasting drone coordinates
-    stop_broadcast = broadcast_drone_coordinates(socketio)
+def handle_connect_wrapper(socketio):
+    """
+    Wrapper for handling connect event.
+    Starts broadcasting if this is the first client.
+    """
+    global stop_broadcast
+    print(f'connected_clients (pre_connect): {connected_clients}')
+    handle_connect()  # Call the original connection handler
+    print(f'connected_clients (post_connect): {connected_clients}')
+
+    if len(connected_clients) == 1:  # If this is the first client to connect
+        print(f'connected_clients (first_client): {connected_clients}')
+        stop_broadcast = broadcast_drone_coordinates(socketio, interval=10)
+        print('Broadcasting started for the first client.')
+
+def handle_disconnect_wrapper(socketio):
+    """
+    Wrapper for handling disconnect event.
+    Stops broadcasting if no clients are connected.
+    """
+    global stop_broadcast
+    print(f'connected_clients (pre_disconnect): {connected_clients}')
+    handle_disconnect()  # Call the original disconnect handler
+    print(f'connected_clients (post_disconnect): {connected_clients}')
+
+    if len(connected_clients) == 0 and stop_broadcast:  # No clients left
+        print(f'connected_clients (no_clients): {connected_clients}')
+        print('Stopping broadcast')
+        stop_broadcast.set()
+        stop_broadcast = None
+        print('Broadcasting stopped due to no clients.')
+
 
 def shutdown_server():
     """
     Clean up the background threads and other resources before server shutdown.
     """
     global stop_broadcast
+    print('shutdown_server called!!!!!!')
     if stop_broadcast:
+        print('Inside if statement in shutdown_server function')
         stop_broadcast.set()
 
 
