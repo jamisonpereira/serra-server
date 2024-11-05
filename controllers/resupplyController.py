@@ -7,6 +7,9 @@ from services.drone.droneService import connect_drone, set_vehicle_parameters, a
 import time
 import subprocess
 import os
+from services.websocket.handlers.emit_handlers import emit_landing_request
+from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
+from extensions import socketio  # Import the shared socketio instance
 
 def request_resupply():
   # Connect to the drone
@@ -60,6 +63,8 @@ def request_resupply():
           print(f'Current distance to target: {current_distance}')
           if current_distance < how_close_to_target:
               print(f"Drone has reached the destination at coordinates ({x}, {y}) with altitude {altitude}.")
+              # Emit landing request to client via reusable function
+              emit_landing_request(socketio, drone_id='DRONE123', latitude=current_x, longitude=current_y)
               break
           time.sleep(1)  # Wait for 1 second before checking again    
 
@@ -69,18 +74,32 @@ def request_resupply():
   topic = "/camera/image"
   subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {video_stream_script} --server {ngrok_server} --topic {topic}; exec bash'])
   
-  # Prompt the user to start precision landing
-  start_precision_landing = input("Do you want to start precision landing? (y/n): ")
+  # # Prompt the user to start precision landing
+  # start_precision_landing = input("Do you want to start precision landing? (y/n): ")
 
 
-  if start_precision_landing.lower() == "y" or start_precision_landing.lower() == "yes":
-      print('Executing precision landing.')
+  # if start_precision_landing.lower() == "y" or start_precision_landing.lower() == "yes":
+  #     print('Executing precision landing.')
 
-      # Run the wrapper scriptb
-      # subprocess.Popen(['/usr/local/bin/run_precision_landing_wrapper.sh'])
-      # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', '/usr/local/bin/run_precision_landing_wrapper.sh; exec bash'])
-      precision_landing_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/serverPrecisionLanding.py"
-      subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {precision_landing_script}; exec bash'])
+  #     # Run the wrapper scriptb
+  #     # subprocess.Popen(['/usr/local/bin/run_precision_landing_wrapper.sh'])
+  #     # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', '/usr/local/bin/run_precision_landing_wrapper.sh; exec bash'])
+  #     precision_landing_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/serverPrecisionLanding.py"
+  #     subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {precision_landing_script}; exec bash'])
+
+ # Wait for landing permission response from the user
+  print("Waiting for user permission to proceed with landing...")
+  landing_permission_event.wait()  # Wait until landing_permission_event is set by the callback
+
+
+    # Proceed based on user's response
+  if landing_permission_granted:
+        print('Executing precision landing.')
+        # Run the precision landing script
+        precision_landing_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/serverPrecisionLanding.py"
+        subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {precision_landing_script}; exec bash'])
+  else:
+        print('Landing was not authorized by the user. Aborting landing sequence.')
 
 
 #########################################

@@ -1,4 +1,4 @@
-# webscoket/websocket.py
+# websocket/websocket.py
 
 from .handlers.connection_handlers import handle_connect, handle_disconnect
 from .handlers.message_handlers import handle_message
