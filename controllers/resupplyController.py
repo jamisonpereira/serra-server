@@ -8,11 +8,12 @@ import time
 import subprocess
 import os
 from services.websocket.handlers.emit_handlers import emit_landing_request
-from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
+# from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
+from services.resupply_state import shared_resupply_state  # Import the shared resupply state
 from extensions import socketio  # Import the shared socketio instance
 
 def request_resupply():
-  global landing_permission_granted 
+  # global landing_permission_granted 
   
   # Connect to the drone
   
@@ -35,6 +36,12 @@ def request_resupply():
 
   # Arm and takeoff
   arm_and_takeoff(vehicle=drone, target_height=target_height)
+
+  print('Starting video stream service.')
+  video_stream_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/video_stream_service.py"
+  ngrok_server = "wss://rattler-helped-hawk.ngrok-free.app"
+  topic = "/camera/image"
+  subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {video_stream_script} --server {ngrok_server} --topic {topic}; exec bash'])
 
   # Get GPS coordinate from request
   # gps_coordinate = request.json.get('gps_coordinate')
@@ -70,12 +77,7 @@ def request_resupply():
               break
           time.sleep(1)  # Wait for 1 second before checking again    
 
-  print('Starting video stream service.')
-  video_stream_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/video_stream_service.py"
-  ngrok_server = "wss://rattler-helped-hawk.ngrok-free.app"
-  topic = "/camera/image"
-  subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {video_stream_script} --server {ngrok_server} --topic {topic}; exec bash'])
-  
+
   # # Prompt the user to start precision landing
   # start_precision_landing = input("Do you want to start precision landing? (y/n): ")
 
@@ -91,11 +93,11 @@ def request_resupply():
 
  # Wait for landing permission response from the user
   print("Waiting for user permission to proceed with landing...")
-  landing_permission_event.wait()  # Wait until landing_permission_event is set by the callback
+  shared_resupply_state.landing_permission_event.wait()  # Wait until landing_permission_event is set by the callback
 
-
+  print(f'landing_permission_granted (resupplyController.py): {shared_resupply_state.landing_permission_granted}')
     # Proceed based on user's response
-  if landing_permission_granted:
+  if shared_resupply_state.landing_permission_granted:
         print('Executing precision landing.')
         # Run the precision landing script
         precision_landing_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/serverPrecisionLanding.py"

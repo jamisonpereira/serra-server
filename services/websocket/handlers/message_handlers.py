@@ -8,8 +8,8 @@ from .test_handlers import handle_test_message
 
 # Import the global landing permission event and flag
 # from controllers.resupplyController import landing_permission_event, landing_permission_granted
-from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
-
+# from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
+from services.resupply_state import shared_resupply_state  # Import the shared resupply state
 
 def handle_message(data):
     """
@@ -47,18 +47,18 @@ def handle_landing_response(data):
     """
     Callback function to handle landing response from the user.
     """
-    global landing_permission_granted
+    # global landing_permission_granted
     response = data.get('response')
     if response == 'approved':
-        landing_permission_granted = True
+        shared_resupply_state.landing_permission_granted = True
         print("Landing approved by the user.")
     elif response == 'wait':
-        landing_permission_granted = False
+        shared_resupply_state.landing_permission_granted = False
         print("User has requested to wait before landing.")
     else:
         print("Invalid response received for landing authorization.")
-    
-    landing_permission_event.set()  # Signal that the response has been received
+    print (f"landing_permission_granted: {shared_resupply_state.landing_permission_granted}")
+    shared_resupply_state.landing_permission_event.set()  # Signal that the response has been received
 
 
 # def handle_landing_permission(data):
