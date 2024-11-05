@@ -8,7 +8,7 @@ from .test_handlers import handle_test_message
 
 # Import the global landing permission event and flag
 # from controllers.resupplyController import landing_permission_event, landing_permission_granted
-from resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
+from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
 
 
 def handle_message(data):
