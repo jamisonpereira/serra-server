@@ -12,6 +12,8 @@ from services.resupply_state import landing_permission_event, landing_permission
 from extensions import socketio  # Import the shared socketio instance
 
 def request_resupply():
+  global landing_permission_granted 
+  
   # Connect to the drone
   
   #TODO: add error handling to send back a response if the connection fails and other functions fail.
