@@ -1,29 +1,21 @@
 # websocket/handlers/video_handlers.py
 
-from flask_socketio import emit, disconnect
-from flask import request
-from middleware.authenticate import verify_token
-import json
+from flask_socketio import emit
+from ..state import connected_clients
+import base64
 
-def handle_video_feed(data):
+def handle_video_feed(frame_data):
     """
-    Handle incoming video feed data.
+    Handle incoming video feed data and broadcast to all connected clients.
     """
-    # Authenticate each message
-    token = request.args.get('token')
-    result = verify_token(token)
-
-    if isinstance(result, tuple):  # Invalid token case
-        emit('error', {'error': 'Unauthorized access'})
-        disconnect(request.sid)
-        return
-
     try:
-        # Process the video feed data
-        video_data = json.loads(data)
-        print(f"Video feed data received: {video_data}")
-        # Emit response or perform any necessary operations
-        emit('video_feed_response', {'response': 'Video feed data processed'}, to=request.sid)
-
-    except json.JSONDecodeError:
-        emit('error', {'error': 'Invalid JSON format'}, to=request.sid)
+        print("Received video feed data. Encoding.")
+        encoded_frame = base64.b64encode(frame_data).decode('utf-8')
+        print("Feed encoded. Broadcasting to all clients.")
+        # Emit the video frame to all connected clients
+        for client in connected_clients:
+            print(f"Broadcasting video frame to client: {client}")
+            emit('video_feed', encoded_frame, room=client)
+        print("Video frame successfully broadcasted to all clients.")
+    except Exception as e:
+        print(f"Error while broadcasting video feed: {e}")

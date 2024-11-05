@@ -24,3 +24,4 @@ Werkzeug==2.2.3
 zipp==3.15.0
 flask-socketio
 flask-socketio
+websocket-client==1.8.0

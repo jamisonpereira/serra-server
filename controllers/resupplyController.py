@@ -62,9 +62,16 @@ def request_resupply():
               print(f"Drone has reached the destination at coordinates ({x}, {y}) with altitude {altitude}.")
               break
           time.sleep(1)  # Wait for 1 second before checking again    
+
+  print('Starting video stream service.')
+  video_stream_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/video_stream_service.py"
+  ngrok_server = "wss://rattler-helped-hawk.ngrok-free.app"
+  topic = "/camera/image"
+  subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {video_stream_script} --server {ngrok_server} --topic {topic}; exec bash'])
   
   # Prompt the user to start precision landing
   start_precision_landing = input("Do you want to start precision landing? (y/n): ")
+
 
   if start_precision_landing.lower() == "y" or start_precision_landing.lower() == "yes":
       print('Executing precision landing.')

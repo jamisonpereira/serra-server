@@ -1,19 +1,33 @@
 import jwt
 from flask import request, jsonify
 from functools import wraps
+import os
 
 # Load public key for JWT verification
 with open('public.key', 'r') as f:
     public_key = f.read()
 
-def verify_token(token):
-    try:
-        user = jwt.decode(token, public_key, algorithms=['RS256'])
-        return user
-    except jwt.ExpiredSignatureError:
-        return {"error": "Token has expired"}, 403
-    except jwt.InvalidTokenError:
-        return {"error": "Invalid or expired token"}, 403
+def verify_token(token=None, drone_password=None):
+    # try:
+    #     user = jwt.decode(token, public_key, algorithms=['RS256'])
+    #     return user
+    # except jwt.ExpiredSignatureError:
+    #     return {"error": "Token has expired"}, 403
+    # except jwt.InvalidTokenError:
+    #     return {"error": "Invalid or expired token"}, 403
+    if token:
+        # Verify JWT token
+        try:
+            jwt.decode(token, public_key, algorithms=['RS256'])
+            return True
+        except jwt.ExpiredSignatureError:
+            return False
+        except jwt.InvalidTokenError:
+            return False
+    elif drone_password == os.getenv('DRONE_SECRET'):
+        # If the shared secret matches, consider it authorized
+        return True
+    return False
 
 def authenticate_token(f):
     @wraps(f)

@@ -32,7 +32,7 @@ def handle_connect_wrapper(socketio):
 
     if len(connected_clients) == 1:  # If this is the first client to connect
         print(f'connected_clients (first_client): {connected_clients}')
-        stop_broadcast = broadcast_drone_coordinates(socketio, interval=10)
+        stop_broadcast = broadcast_drone_coordinates(socketio, interval=2.5)
         print('Broadcasting started for the first client.')
 
 def handle_disconnect_wrapper(socketio):
