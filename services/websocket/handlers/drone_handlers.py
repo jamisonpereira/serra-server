@@ -2,7 +2,7 @@
 
 from flask_socketio import emit  # noqa: F401
 from threading import Thread, Event
-from services.drone.droneService import get_current_position, connect_drone, calculate_distance, convert_local_to_gps
+from services.drone.droneService import get_current_position, connect_drone, calculate_distance, convert_local_to_gps, get_gps_position_mavlink
 
 # Placeholder function to get the current drone coordinates
 
@@ -39,6 +39,8 @@ def broadcast_drone_coordinates(socketio, interval=5):
             # print('Inside while loop')
             try:
                 lat, long, alt = get_current_position(drone)
+                # lat, long, alt = get_gps_position_mavlink(drone)
+                # print('***TEST****: Current drone coordinates: ', lat, long, alt)
                 current_coordinates = (lat, long, alt)
                 
                 # my_altitude = drone.location.global_relative_frame.alt  # Current altitude

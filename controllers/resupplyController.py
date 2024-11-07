@@ -38,11 +38,11 @@ def request_resupply():
   # Arm and takeoff
   arm_and_takeoff(vehicle=drone, target_height=target_height)
 
-  print('Starting video stream service.')
-  video_stream_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/video_stream_service.py"
-  ngrok_server = "wss://rattler-helped-hawk.ngrok-free.app"
-  topic = "/camera/image"
-  subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {video_stream_script} --server {ngrok_server} --topic {topic}; exec bash'])
+  # print('Starting video stream service.')
+  # video_stream_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/video_stream_service.py"
+  # ngrok_server = "wss://rattler-helped-hawk.ngrok-free.app"
+  # topic = "/camera/image"
+  # subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {video_stream_script} --server {ngrok_server} --topic {topic}; exec bash'])
 
   # Get GPS coordinate from request
   # gps_coordinate = request.json.get('gps_coordinate')

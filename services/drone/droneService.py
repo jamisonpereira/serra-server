@@ -172,8 +172,46 @@ def get_current_position(vehicle):
     Example:
         lat, lon, alt = get_current_position(vehicle)
     """
+    
     return vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, vehicle.location.global_relative_frame.alt
 
+def get_gps_position_mavlink(vehicle):
+    """
+    Use an explicit MAVLink command to get the latitude, longitude, and altitude of the drone.
+
+    Args:
+        vehicle: The connected DroneKit vehicle instance.
+
+    Returns:
+        tuple: A tuple containing the latitude, longitude, and altitude of the drone.
+    """
+    # Create a command to request GPS position (GLOBAL_POSITION_INT message)
+    msg = vehicle.message_factory.command_long_encode(
+        0, 0,    # target_system, target_component
+        mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,  # command
+        0,        # confirmation
+        mavutil.mavlink.MAVLINK_MSG_ID_GLOBAL_POSITION_INT,  # MAVLink message ID for GLOBAL_POSITION_INT
+        1000000,  # Interval in microseconds (1 second)
+        0, 0, 0, 0, 0  # Unused parameters (reduced to 5 unused parameters)
+    )
+
+    # Send the command to the vehicle
+    vehicle.send_mavlink(msg)
+    vehicle.flush()
+
+    # Wait for the message and return the GPS position
+    while True:
+        # Get the current GPS position from the vehicle's location attribute
+        location = vehicle.location.global_relative_frame
+        if location is not None:
+            # Extract the latitude, longitude, and altitude from the location
+            lat = location.lat
+            lon = location.lon
+            alt = location.alt
+            return lat, lon, alt
+        else:
+            print("No GPS position received, retrying...")
+            time.sleep(1)
 
 ####### Testing in Gazebo #########
 
