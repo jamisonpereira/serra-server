@@ -7,7 +7,7 @@ from services.drone.droneService import connect_drone, set_vehicle_parameters, a
 import time
 import subprocess
 import os
-from services.websocket.handlers.emit_handlers import emit_landing_request
+from services.websocket.handlers.emit_handlers import emit_landing_request, emit_mission_status, emit_drone_status  # Import the reusable emit functions
 # from services.resupply_state import landing_permission_event, landing_permission_granted  # Import landing event and flag
 from services.resupply_state import shared_resupply_state  # Import the shared resupply state
 from extensions import socketio  # Import the shared socketio instance
@@ -20,6 +20,7 @@ def request_resupply():
   #TODO: add error handling to send back a response if the connection fails and other functions fail.
   connection_string = 'udp:127.0.0.1:14550'
   drone = connect_drone(connection_string=connection_string)
+  emit_mission_status(socketio, drone_id='DRONE123', status='OnMission')  # Emit mission status to all connected clients
 
   parameters = {
     'PLND_ENABLED': 1,
@@ -70,9 +71,11 @@ def request_resupply():
           current_x, current_y, current_altitude = get_current_position(vehicle=drone)
           current_distance = calculate_distance(current_x, current_y, current_altitude, target_latitude, target_longitude, altitude)
           print(f'Current distance to target: {current_distance}')
+          emit_drone_status(socketio, drone_id='DRONE123', status='Flying')  # Emit drone status to all connected clients
           if current_distance < how_close_to_target:
               print(f"Drone has reached the destination at coordinates ({x}, {y}) with altitude {altitude}.")
               # Emit landing request to client via reusable function
+              emit_drone_status(socketio, drone_id='DRONE123', status='Loitering')  # Emit drone status to all connected clients
               emit_landing_request(socketio, drone_id='DRONE123', latitude=current_x, longitude=current_y)
               break
           time.sleep(1)  # Wait for 1 second before checking again    
@@ -100,6 +103,7 @@ def request_resupply():
   if shared_resupply_state.landing_permission_granted:
         print('Executing precision landing.')
         # Run the precision landing script
+        emit_drone_status(socketio, drone_id='DRONE123', status='Landing')  # Emit drone status to all connected clients
         precision_landing_script = "/home/jamison/ardu_ws/src/serra/serra/scripts/serverPrecisionLanding.py"
         subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', f'python3 {precision_landing_script}; exec bash'])
   else:

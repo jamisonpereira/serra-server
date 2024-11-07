@@ -23,3 +23,39 @@ def emit_landing_request(socketio, drone_id, latitude, longitude):
         })
     else:
         print('No connected clients to emit landing request.')
+
+def emit_mission_status(socketio, drone_id, status):
+    """
+    Emit a mission status event to all connected clients.
+    
+    Args:
+        socketio: The Socket.IO instance to use for emitting events.
+        drone_id (str): The ID of the drone sending the request.
+        status (str): The status message to send.
+    """
+    if connected_clients:  # Only emit if there are connected clients
+        print(f'Emitting mission status to {len(connected_clients)} clients...')
+        socketio.emit('mission_status', {
+            'drone_id': drone_id,
+            'status': status
+        })
+    else:
+        print('No connected clients to emit mission status.')
+        
+def emit_drone_status(socketio, drone_id, status):
+    """
+    Emit a drone status event to all connected clients.
+    
+    Args:
+        socketio: The Socket.IO instance to use for emitting events.
+        drone_id (str): The ID of the drone sending the request.
+        status (str): The status message to send.
+    """
+    if connected_clients:  # Only emit if there are connected clients
+        print(f'Emitting drone status to {len(connected_clients)} clients...')
+        socketio.emit('drone_status', {
+            'drone_id': drone_id,
+            'status': status
+        })
+    else:
+        print('No connected clients to emit drone status.')

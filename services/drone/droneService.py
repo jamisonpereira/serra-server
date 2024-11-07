@@ -4,6 +4,8 @@ from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 import time
 import math
+from services.websocket.handlers.emit_handlers import emit_drone_status
+from extensions import socketio  # Import the shared socketio instance
 
 vehicle = None
 
@@ -17,7 +19,9 @@ def connect_drone(connection_string='127.0.0.1:14550'):
     if vehicle is None:
         try:
             print("Connecting to vehicle...")
+            emit_drone_status(socketio, drone_id='DRONE123', status='Connecting')  # Emit drone status to all connected clients
             vehicle = connect(connection_string, wait_ready=True)
+            emit_drone_status(socketio, drone_id='DRONE123', status='Connected')  # Emit drone status to all connected clients
             print("Connected to vehicle.")
         except Exception as e:
             print("Failed to connect to vehicle:", str(e))
@@ -53,8 +57,10 @@ def arm_and_takeoff(vehicle, target_height):
         print("Arming and taking off...")
         while not vehicle.is_armable:
             print('Waiting for vehicle to become armable...')
+            emit_drone_status(socketio, drone_id='DRONE123', status='Arming')  # Emit drone status to all connected clients
             time.sleep(1)
         print('Vehicle is now armable.')
+        emit_drone_status(socketio, drone_id='DRONE123', status='Armed')  # Emit drone status to all connected clients
 
         vehicle.mode = VehicleMode('GUIDED')
 
@@ -73,6 +79,7 @@ def arm_and_takeoff(vehicle, target_height):
 
         while True:
             print('Current Altitude: {:.2f}'.format(vehicle.location.global_relative_frame.alt))
+            emit_drone_status(socketio, drone_id='DRONE123', status='Taking off')  # Emit drone status to all connected clients
             if vehicle.location.global_relative_frame.alt >= 0.85 * target_height:
                 print('Target altitude reached!')
                 break
